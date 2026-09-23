@@ -111,12 +111,16 @@ class _StockAdjustmentSheetState extends State<StockAdjustmentSheet> {
                   value: p.id,
                   child: Row(
                     children: [
-                      Text(
-                        p.name,
-                        style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w500,
-                          color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                      Expanded(
+                        child: Text(
+                          p.name,
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w500,
+                            color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -251,11 +255,11 @@ class _StockAdjustmentSheetState extends State<StockAdjustmentSheet> {
               isExpanded: true,
               dropdownColor: isDark ? AppColors.surfaceDark : Colors.white,
               items: const [
-                DropdownMenuItem(value: 'Audit Reconciliation', child: Text('Audit Reconciliation / Physical Count')),
-                DropdownMenuItem(value: 'Damaged in Cold Storage', child: Text('Damaged in Cold Storage')),
-                DropdownMenuItem(value: 'Expired Stock Written Off', child: Text('Expired Stock Written Off')),
-                DropdownMenuItem(value: 'Supplier Return', child: Text('Supplier Return / Quality Rejection')),
-                DropdownMenuItem(value: 'Sample / Promotional Tasting', child: Text('Sample / Promotional Tasting')),
+                DropdownMenuItem(value: 'Audit Reconciliation', child: Text('Audit Reconciliation / Physical Count', maxLines: 1, overflow: TextOverflow.ellipsis)),
+                DropdownMenuItem(value: 'Damaged in Cold Storage', child: Text('Damaged in Cold Storage', maxLines: 1, overflow: TextOverflow.ellipsis)),
+                DropdownMenuItem(value: 'Expired Stock Written Off', child: Text('Expired Stock Written Off', maxLines: 1, overflow: TextOverflow.ellipsis)),
+                DropdownMenuItem(value: 'Supplier Return', child: Text('Supplier Return / Quality Rejection', maxLines: 1, overflow: TextOverflow.ellipsis)),
+                DropdownMenuItem(value: 'Sample / Promotional Tasting', child: Text('Sample / Promotional Tasting', maxLines: 1, overflow: TextOverflow.ellipsis)),
               ],
               onChanged: (val) {
                 if (val != null) setState(() => _selectedReason = val);

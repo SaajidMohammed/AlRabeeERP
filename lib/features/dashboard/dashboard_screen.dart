@@ -371,25 +371,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       body: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(
-          isDesktop ? 24 : 16,
-          16,
-          isDesktop ? 24 : 16,
-          isDesktop ? 24 : 24,
+          isDesktop ? 24 : 14,
+          14,
+          isDesktop ? 24 : 14,
+          20,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. Dashboard Header (Matches the reference)
             _buildExecutiveHeader(context, auth, isDark),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
 
             // 2. Responsive 2-Column KPI Grid (Matches the reference)
             _build2ColumnKpiGrid(context, erp),
-            const SizedBox(height: 24),
+            const SizedBox(height: 18),
 
             // 3. Quick Actions Section (Matches the reference)
             _buildQuickActionsSection(context, erp, isDark),
-            const SizedBox(height: 24),
+            const SizedBox(height: 18),
 
             // 4. Analytics & Charts
             if (isDesktop)
@@ -397,20 +397,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(flex: 7, child: _buildSalesTrendChart(isDark, erp)),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 14),
                   Expanded(flex: 5, child: _buildCategoryDonutChart(isDark, erp)),
                 ],
               )
             else ...[
               _buildSalesTrendChart(isDark, erp),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               _buildCategoryDonutChart(isDark, erp),
             ],
-            const SizedBox(height: 24),
+            const SizedBox(height: 18),
 
             // 5. Recent Activity Feed (Matches the reference)
             _buildRecentActivitySection(context, erp, isDark),
-            const SizedBox(height: 24),
+            const SizedBox(height: 18),
 
             // 6. Low Stock & Top Products
             if (isDesktop)
@@ -418,13 +418,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(child: _buildLowStockCard(context, erp, isDark)),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 14),
                   Expanded(child: _buildRecentInvoicesCard(context, erp, isDark)),
                 ],
               )
             else ...[
               _buildLowStockCard(context, erp, isDark),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               _buildRecentInvoicesCard(context, erp, isDark),
             ],
           ],
@@ -443,7 +443,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               child: Column(
@@ -452,66 +452,69 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Text(
                     'Dashboard',
                     style: TextStyle(
-                      fontSize: 26,
+                      fontSize: 24,
                       fontWeight: FontWeight.w900,
                       color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                      letterSpacing: -0.6,
+                      letterSpacing: -0.5,
                       height: 1.1,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
-                    'Welcome back, ${auth.currentUser?.name ?? "Super Admin"}!',
+                    'Welcome back, ${auth.currentUser?.name.replaceAll(" (Saajid)", "") ?? "Super Admin"}!',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
+            const SizedBox(width: 8),
 
             // Date Selector Button
             Material(
               color: isDark ? AppColors.surfaceDark : Colors.white,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               child: InkWell(
                 onTap: _showDatePickerSheet,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: isDark ? AppColors.borderDark : AppColors.borderLight,
-                      width: 1.2,
+                      width: 1.1,
                     ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.03),
                         offset: const Offset(0, 2),
-                        blurRadius: 6,
+                        blurRadius: 4,
                       ),
                     ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.calendar_month_rounded, size: 16, color: AppColors.primary),
-                      const SizedBox(width: 8),
+                      const Icon(Icons.calendar_month_rounded, size: 15, color: AppColors.primary),
+                      const SizedBox(width: 6),
                       Text(
                         _selectedPeriod,
                         style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 4),
                       Icon(
                         Icons.keyboard_arrow_down_rounded,
-                        size: 16,
+                        size: 15,
                         color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
                       ),
                     ],
@@ -539,7 +542,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth > 900;
         final crossAxisCount = isDesktop ? 4 : 2;
-        final childAspectRatio = isDesktop ? 1.6 : 1.15;
+        final childAspectRatio = isDesktop ? 1.6 : 1.35;
 
         final kpis = [
           AlRabeeKpiCard(
@@ -630,8 +633,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
             childAspectRatio: childAspectRatio,
           ),
           itemCount: kpis.length,

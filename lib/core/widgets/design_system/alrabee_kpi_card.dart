@@ -67,10 +67,10 @@ class _AlRabeeKpiCardState extends State<AlRabeeKpiCard> with SingleTickerProvid
           onTapCancel: () => _animController.reverse(),
           onTap: widget.onTap,
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: isDark ? AppColors.cardDark : Colors.white,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: isDark
                     ? (_isHovered ? AppColors.primary.withValues(alpha: 0.4) : AppColors.borderDark)
@@ -81,15 +81,15 @@ class _AlRabeeKpiCardState extends State<AlRabeeKpiCard> with SingleTickerProvid
                   ? [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.2),
-                        offset: const Offset(0, 4),
-                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                        blurRadius: 8,
                       ),
                     ]
                   : [
                       BoxShadow(
                         color: const Color(0xFF0F172A).withValues(alpha: _isHovered ? 0.08 : 0.03),
-                        offset: const Offset(0, 4),
-                        blurRadius: 12,
+                        offset: const Offset(0, 3),
+                        blurRadius: 8,
                         spreadRadius: 0,
                       ),
                     ],
@@ -101,23 +101,23 @@ class _AlRabeeKpiCardState extends State<AlRabeeKpiCard> with SingleTickerProvid
                 // Top Row: Icon Container + Growth Badge
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Soft Pastel Icon Container
                     Container(
-                      width: 44,
-                      height: 44,
+                      width: 38,
+                      height: 38,
                       decoration: BoxDecoration(
                         color: isDark
                             ? widget.iconColor.withValues(alpha: 0.18)
                             : widget.pastelBgColor,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Center(
                         child: Icon(
                           widget.icon,
-                          color: isDark ? widget.iconColor : widget.iconColor,
-                          size: 22,
+                          color: widget.iconColor,
+                          size: 19,
                         ),
                       ),
                     ),
@@ -125,7 +125,7 @@ class _AlRabeeKpiCardState extends State<AlRabeeKpiCard> with SingleTickerProvid
                     // Growth Pill
                     if (widget.trendPercent != null)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                         decoration: BoxDecoration(
                           color: widget.isPositiveTrend
                               ? (isDark ? const Color(0xFF143823) : AppColors.pastelMint)
@@ -139,7 +139,7 @@ class _AlRabeeKpiCardState extends State<AlRabeeKpiCard> with SingleTickerProvid
                               widget.isPositiveTrend
                                   ? Icons.arrow_outward_rounded
                                   : Icons.arrow_downward_rounded,
-                              size: 11,
+                              size: 10,
                               color: widget.isPositiveTrend
                                   ? (isDark ? const Color(0xFF4ADE80) : AppColors.successText)
                                   : (isDark ? const Color(0xFFF87171) : AppColors.errorText),
@@ -148,7 +148,7 @@ class _AlRabeeKpiCardState extends State<AlRabeeKpiCard> with SingleTickerProvid
                             Text(
                               '${widget.isPositiveTrend ? '+' : '-'}${widget.trendPercent!.toStringAsFixed(0)}%',
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 10.5,
                                 fontWeight: FontWeight.bold,
                                 color: widget.isPositiveTrend
                                     ? (isDark ? const Color(0xFF4ADE80) : AppColors.successText)
@@ -161,16 +161,17 @@ class _AlRabeeKpiCardState extends State<AlRabeeKpiCard> with SingleTickerProvid
                   ],
                 ),
 
-                const SizedBox(height: 14),
+                const SizedBox(height: 8),
 
                 // Card Metric & Label
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       widget.title,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                         letterSpacing: 0.1,
@@ -178,15 +179,15 @@ class _AlRabeeKpiCardState extends State<AlRabeeKpiCard> with SingleTickerProvid
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       widget.value,
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: 19,
                         fontWeight: FontWeight.w800,
                         color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
-                        letterSpacing: -0.5,
-                        height: 1.1,
+                        letterSpacing: -0.4,
+                        height: 1.15,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -196,7 +197,7 @@ class _AlRabeeKpiCardState extends State<AlRabeeKpiCard> with SingleTickerProvid
                       Text(
                         widget.subtitle!,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10.5,
                           color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
                         ),
                         maxLines: 1,
