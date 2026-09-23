@@ -113,6 +113,13 @@ _ScreenMeta _resolveScreenMeta(String path) {
       icon: Icons.admin_panel_settings_rounded,
     );
   }
+  if (path.startsWith('/more')) {
+    return const _ScreenMeta(
+      title: 'More Modules',
+      category: 'Enterprise Suite',
+      icon: Icons.grid_view_rounded,
+    );
+  }
   if (path.startsWith('/settings')) {
     return const _ScreenMeta(
       title: 'System Settings',
@@ -192,6 +199,7 @@ class Topbar extends StatelessWidget implements PreferredSizeWidget {
                   isDark: isDark,
                   screenMeta: screenMeta,
                   isSubRoute: isSubRoute,
+                  currentPath: currentPath,
                   erp: erp,
                   auth: auth,
                   themeProvider: themeProvider,
@@ -203,7 +211,7 @@ class Topbar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   /// Mobile Header Layout:
-  /// Left: Hamburger or Back Button + Brand Icon
+  /// Left: Back Button (on sub-pages) or Brand Emblem
   /// Center: "AL RABEE ERP" App Name + Dynamic Active Screen Name
   /// Right: Search button + Dark mode toggle + Notification bell + Avatar
   Widget _buildMobileHeader(
@@ -211,31 +219,32 @@ class Topbar extends StatelessWidget implements PreferredSizeWidget {
     required bool isDark,
     required _ScreenMeta screenMeta,
     required bool isSubRoute,
+    required String currentPath,
     required ErpProvider erp,
     required AuthProvider auth,
     required ThemeProvider themeProvider,
     required CommandPaletteProvider palette,
   }) {
+    final isRootTab = currentPath == '/dashboard' ||
+        currentPath == '/inventory' ||
+        currentPath == '/invoices' ||
+        currentPath == '/reports' ||
+        currentPath == '/more';
+
     return Row(
       children: [
-        // Navigation Leading Button (Back on sub-page, otherwise Drawer menu)
-        if (isSubRoute)
+        // Navigation Leading Button (Back on sub-page, otherwise direct brand emblem)
+        if (isSubRoute || (!isRootTab && Navigator.of(context).canPop()))
           IconButton(
             icon: const Icon(Icons.arrow_back_rounded, size: 22),
-            tooltip: 'Back to Sales',
+            tooltip: 'Back',
             onPressed: () {
               if (Navigator.of(context).canPop()) {
                 context.pop();
               } else {
-                context.go('/sales');
+                context.go('/dashboard');
               }
             },
-          )
-        else
-          IconButton(
-            icon: const Icon(Icons.menu_rounded, size: 22),
-            tooltip: 'Navigation Menu',
-            onPressed: onOpenDrawer,
           ),
 
         const SizedBox(width: 4),

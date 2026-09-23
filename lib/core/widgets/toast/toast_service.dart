@@ -109,4 +109,22 @@ class ToastService extends ChangeNotifier {
     _toasts.clear();
     notifyListeners();
   }
+
+  static void showSuccess(String title, {String? message, String? actionLabel, VoidCallback? onAction}) {
+    _instance.success(title, message: message, actionLabel: actionLabel, onAction: onAction);
+  }
+
+  static void showError(String title, {String? message, String? actionLabel, VoidCallback? onAction}) {
+    _instance.error(title, message: message, actionLabel: actionLabel, onAction: onAction);
+  }
+
+  static void showWarning(String title, {String? message, String? actionLabel, VoidCallback? onAction}) {
+    _instance.warning(title, message: message, actionLabel: actionLabel, onAction: onAction);
+  }
+
+  static void showInfo(String title, {String? message, String? actionLabel, VoidCallback? onAction}) {
+    _instance.info(title, message: message, actionLabel: actionLabel, onAction: onAction);
+  }
 }
+
+

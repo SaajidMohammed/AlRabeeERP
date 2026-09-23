@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_tokens.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/responsive.dart';
-import '../../core/widgets/badges/status_badge.dart';
-import '../../core/widgets/cards/section_card.dart';
-import '../../core/widgets/table/erp_data_table.dart';
+import '../../core/widgets/design_system/design_system.dart';
 import '../../models/product_model.dart';
+
 import '../../providers/erp_provider.dart';
+import 'stock_adjustment_sheet.dart';
 
 class InventoryScreen extends StatefulWidget {
   const InventoryScreen({super.key});
@@ -18,7 +17,15 @@ class InventoryScreen extends StatefulWidget {
 }
 
 class _InventoryScreenState extends State<InventoryScreen> {
-  int _tabIndex = 0;
+  final TextEditingController _searchController = TextEditingController();
+  String _selectedFilter = 'All';
+  int _tabIndex = 0; // 0: Inventory Cards, 1: Movement Audit
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,272 +33,454 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDesktop = Responsive.isDesktop(context);
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(isDesktop ? 24 : 12),
+    final query = _searchController.text.toLowerCase();
+    final filteredProducts = erp.products.where((p) {
+      final matchesQuery = query.isEmpty ||
+          p.name.toLowerCase().contains(query) ||
+          p.sku.toLowerCase().contains(query) ||
+          p.category.toLowerCase().contains(query) ||
+          p.primaryWarehouse.toLowerCase().contains(query);
+
+      if (!matchesQuery) return false;
+
+      if (_selectedFilter == 'Low Stock') return p.stockStatus == StockStatus.lowStock;
+      if (_selectedFilter == 'Out of Stock') return p.currentStock <= 0;
+      if (_selectedFilter == 'Healthy') return p.stockStatus == StockStatus.healthy;
+
+      return true;
+    }).toList();
+
+    return Scaffold(
+      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      body: CustomScrollView(
+        slivers: [
+          // Header & Quick Controls
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(isDesktop ? 24 : 16, 16, isDesktop ? 24 : 16, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Inventory & Stock',
+                              style: TextStyle(
+                                fontSize: isDesktop ? 24 : 22,
+                                fontWeight: FontWeight.w800,
+                                color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                                letterSpacing: -0.5,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Valuation: ${Formatters.currency(erp.totalInventoryValue)} across 3 cold hubs',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      AlRabeeButton(
+                        label: 'Adjust Stock',
+                        icon: Icons.tune_rounded,
+                        height: 38,
+                        onPressed: () => StockAdjustmentSheet.show(context, erp),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Search Bar
+                  AlRabeeSearchBar(
+                    controller: _searchController,
+                    hintText: 'Search products by SKU, name, origin...',
+                    onChanged: (_) => setState(() {}),
+                    onClear: () => setState(() {}),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Filter Chips & View Tabs
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _buildFilterChip('All', erp.products.length),
+                              _buildFilterChip('Healthy', erp.products.where((p) => p.stockStatus == StockStatus.healthy).length),
+                              _buildFilterChip('Low Stock', erp.lowStockProducts.length),
+                              _buildFilterChip('Out of Stock', erp.products.where((p) => p.currentStock <= 0).length),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Tab Switcher (Catalog vs Movements)
+                      Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: isDark ? AppColors.surfaceDark : AppColors.cardHoverLight,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: isDark ? AppColors.borderDark : AppColors.borderLight),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildTabIcon(0, Icons.grid_view_rounded, 'Products'),
+                            _buildTabIcon(1, Icons.history_rounded, 'Movements'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Content
+          if (_tabIndex == 0) ...[
+            if (filteredProducts.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: AlRabeeEmptyState(
+                  icon: Icons.inventory_2_outlined,
+                  title: 'No products found',
+                  message: 'Try changing your search keywords or filter.',
+                  actionLabel: 'Reset Filters',
+                  onAction: () {
+                    setState(() {
+                      _searchController.clear();
+                      _selectedFilter = 'All';
+                    });
+                  },
+                ),
+              )
+            else
+              SliverPadding(
+                padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 16, vertical: 8),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final product = filteredProducts[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _buildProductCard(context, product, isDark, erp),
+                      );
+                    },
+                    childCount: filteredProducts.length,
+                  ),
+                ),
+              ),
+          ] else ...[
+            SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 16, vertical: 8),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final mov = erp.stockMovements[index];
+                    final isPositive = mov.type == StockMovementType.purchase || mov.type == StockMovementType.transferIn;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: AlRabeeCard(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: isPositive ? AppColors.pastelMint : AppColors.pastelRose,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                isPositive ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                                size: 18,
+                                color: isPositive ? AppColors.successText : AppColors.errorText,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${mov.type.label}: ${mov.productName}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                  ),
+                                  Text(
+                                    'Ref: ${mov.reference} • ${mov.warehouse}',
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  '${isPositive ? "+" : "-"}${mov.quantity}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: isPositive ? AppColors.success : AppColors.error,
+                                  ),
+                                ),
+                                Text(
+                                  Formatters.timeAgo(mov.timestamp),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  childCount: erp.stockMovements.length,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabIcon(int index, IconData icon, String tooltip) {
+    final isSelected = _tabIndex == index;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return InkWell(
+      onTap: () => setState(() => _tabIndex = index),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected
+                  ? Colors.white
+                  : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, int count) {
+    final isSelected = _selectedFilter == label;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        label: Text('$label ($count)'),
+        selected: isSelected,
+        onSelected: (_) => setState(() => _selectedFilter = label),
+        labelStyle: TextStyle(
+          fontSize: 12,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+          color: isSelected
+              ? Colors.white
+              : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight),
+        ),
+        selectedColor: AppColors.primary,
+        backgroundColor: isDark ? AppColors.surfaceDark : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: isSelected ? AppColors.primary : (isDark ? AppColors.borderDark : AppColors.borderLight),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        showCheckmark: false,
+      ),
+    );
+  }
+
+  Widget _buildProductCard(BuildContext context, ProductModel p, bool isDark, ErpProvider erp) {
+    final isLow = p.stockStatus == StockStatus.lowStock || p.currentStock <= p.minimumStock;
+    final isOut = p.currentStock <= 0;
+
+    return AlRabeeCard(
+      padding: const EdgeInsets.all(14),
+      onTap: () => StockAdjustmentSheet.show(context, erp, product: p),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Wrap(
-            spacing: 16,
-            runSpacing: 12,
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Product Icon / Pastel Container
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: isLow
+                      ? AppColors.pastelAmber
+                      : (isOut ? AppColors.pastelRose : AppColors.pastelMint),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Icon(
+                    isLow
+                        ? Icons.warning_amber_rounded
+                        : (isOut ? Icons.block_rounded : Icons.inventory_2_rounded),
+                    color: isLow
+                        ? AppColors.pastelAmberIcon
+                        : (isOut ? AppColors.pastelRoseIcon : AppColors.pastelMintIcon),
+                    size: 22,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Title, SKU, Category
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      p.name,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.5,
+                        color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'SKU: ${p.sku} • ${p.category}',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: isDark ? AppColors.textMutedDark : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                    Text(
+                      'Rack: ${p.rackLocation} • ${p.primaryWarehouse}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Price
               Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'Inventory & Warehousing',
-                    style: (isDesktop
-                            ? Theme.of(context).textTheme.headlineMedium
-                            : Theme.of(context).textTheme.titleLarge)
-                        ?.copyWith(
-                      fontWeight: FontWeight.bold,
+                    '${Formatters.currency(p.sellingPrice)} / ${p.unit}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                     ),
                   ),
-                  Text(
-                    'Multi-hub cold storage tracking, live shelf quantities & stock audit ledger',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  const SizedBox(height: 4),
+                  if (isOut)
+                    StatusBadge.error('Out of Stock')
+                  else if (isLow)
+                    StatusBadge.warning('Low Stock')
+                  else
+                    StatusBadge.success('Healthy'),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 16),
 
-          // Warehouse Capacity Cards
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isMobile = constraints.maxWidth < 700;
-              final cards = erp.warehouses.map((wh) {
-                final usagePercent = (wh.currentUsage / wh.totalCapacity) * 100;
-                return Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.cardDark : Colors.white,
-                    borderRadius: AppTokens.borderRadiusMd,
-                    border: Border.all(
-                      color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          const SizedBox(height: 12),
+          const Divider(height: 1),
+          const SizedBox(height: 10),
+
+          // Stock Level Bar & Quick Adjust CTA
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    'Stock: ',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              wh.name,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (wh.isColdStorage)
-                            const Icon(Icons.ac_unit_rounded, size: 16, color: AppColors.oceanBlue),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Manager: ${wh.manager} • ${wh.code}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(
-                        value: wh.currentUsage / wh.totalCapacity,
-                        backgroundColor: isDark ? Colors.black26 : Colors.grey.shade200,
-                        color: usagePercent > 85 ? AppColors.warning : AppColors.primary,
-                        minHeight: 6,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('${wh.currentUsage} / ${wh.totalCapacity} kg', style: const TextStyle(fontSize: 11)),
-                          Text('${usagePercent.toStringAsFixed(0)}% Utilized',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ],
+                  Text(
+                    '${p.currentStock} ${p.unit}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: isLow ? AppColors.warning : (isOut ? AppColors.error : AppColors.primary),
+                    ),
                   ),
-                );
-              }).toList();
-
-              if (isMobile) {
-                return Column(
-                  children: cards
-                      .map((c) => Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: c,
-                          ))
-                      .toList(),
-                );
-              }
-
-              return Row(
-                children: cards
-                    .map((c) => Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 12),
-                            child: c,
-                          ),
-                        ))
-                    .toList(),
-              );
-            },
-          ),
-          const SizedBox(height: 16),
-
-          // Tabs
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              ChoiceChip(
-                label: Text('Live Stock Master (${erp.products.length})'),
-                selected: _tabIndex == 0,
-                onSelected: (_) => setState(() => _tabIndex = 0),
+                  const SizedBox(width: 8),
+                  Text(
+                    '(Min: ${p.minimumStock} ${p.unit})',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
+                    ),
+                  ),
+                ],
               ),
-              ChoiceChip(
-                label: Text('Stock Movements (${erp.stockMovements.length})'),
-                selected: _tabIndex == 1,
-                onSelected: (_) => setState(() => _tabIndex = 1),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          // Content
-          SizedBox(
-            height: 560,
-            child: _tabIndex == 0
-                ? ErpDataTable<ProductModel>(
-                    items: erp.products,
-                    searchPlaceholder: 'Search inventory SKU, warehouse, category...',
-                    searchMatcher: (p, q) =>
-                        p.name.toLowerCase().contains(q) ||
-                        p.sku.toLowerCase().contains(q) ||
-                        p.primaryWarehouse.toLowerCase().contains(q),
-                    columns: [
-                      ErpTableColumn(
-                        title: 'Product & SKU',
-                        cellBuilder: (p) => Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            Text('${p.sku} • ${p.category}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                          ],
+              InkWell(
+                onTap: () => StockAdjustmentSheet.show(context, erp, product: p),
+                borderRadius: BorderRadius.circular(6),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  child: Row(
+                    children: [
+                      Icon(Icons.tune_rounded, size: 14, color: AppColors.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Adjust',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
                         ),
                       ),
-                      ErpTableColumn(
-                        title: 'Primary Warehouse',
-                        cellBuilder: (p) => Text(p.primaryWarehouse, style: const TextStyle(fontSize: 12)),
-                      ),
-                      ErpTableColumn(
-                        title: 'Shelf Rack',
-                        cellBuilder: (p) => Text(p.rackLocation, style: const TextStyle(fontSize: 12)),
-                      ),
-                      ErpTableColumn(
-                        title: 'Available Stock',
-                        isNumeric: true,
-                        cellBuilder: (p) => Text('${p.currentStock} ${p.unit}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        comparator: (a, b) => a.currentStock.compareTo(b.currentStock),
-                      ),
-                      ErpTableColumn(
-                        title: 'Valuation',
-                        isNumeric: true,
-                        cellBuilder: (p) => Text(Formatters.currency(p.totalStockValue), style: const TextStyle(fontWeight: FontWeight.bold)),
-                        comparator: (a, b) => a.totalStockValue.compareTo(b.totalStockValue),
-                      ),
-                      ErpTableColumn(
-                        title: 'Stock Health',
-                        cellBuilder: (p) {
-                          if (p.stockStatus == StockStatus.healthy) return StatusBadge.success('Optimal');
-                          if (p.stockStatus == StockStatus.lowStock) return StatusBadge.warning('Low Stock');
-                          return StatusBadge.error('Critical Zero');
-                        },
-                      ),
                     ],
-                  )
-                : SectionCard(
-                    isExpanded: true,
-                    title: 'Real-Time Stock Movement Audit Log',
-                    subtitle: 'Automatic recording of purchases (+), retail sales (-), transfers, and damage write-offs',
-                    child: erp.stockMovements.isEmpty
-                        ? const Center(child: Text('No stock movements recorded yet.'))
-                        : ListView.separated(
-                            itemCount: erp.stockMovements.length,
-                            separatorBuilder: (_, _) => const Divider(height: 16),
-                            itemBuilder: (context, idx) {
-                              final mov = erp.stockMovements[idx];
-                              final isPositive = mov.type == StockMovementType.purchase || mov.type == StockMovementType.transferIn;
-
-                              return Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: isPositive
-                                          ? AppColors.success.withValues(alpha: 0.1)
-                                          : AppColors.berryRose.withValues(alpha: 0.1),
-                                      borderRadius: AppTokens.borderRadiusMd,
-                                    ),
-                                    child: Icon(
-                                      isPositive ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
-                                      size: 18,
-                                      color: isPositive ? AppColors.success : AppColors.berryRose,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 14),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '${mov.type.label}: ${mov.productName}',
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                                        ),
-                                        Text(
-                                          'Ref: ${mov.reference} • ${mov.warehouse} • Performed by ${mov.performedBy}',
-                                          style: Theme.of(context).textTheme.bodySmall,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        '${isPositive ? "+" : "-"}${mov.quantity}',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                          color: isPositive ? AppColors.success : AppColors.berryRose,
-                                        ),
-                                      ),
-                                      Text(
-                                        Formatters.timeAgo(mov.timestamp),
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: isDark ? AppColors.textMutedDark : AppColors.textMutedLight,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
                   ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 }
+

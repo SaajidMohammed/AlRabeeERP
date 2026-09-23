@@ -11,8 +11,6 @@ import '../../core/widgets/cards/stat_card.dart';
 import '../../models/accounting_model.dart';
 import '../../models/hr_model.dart';
 import '../../models/product_model.dart';
-import '../../models/purchase_model.dart';
-import '../../models/sales_model.dart';
 import '../../providers/erp_provider.dart';
 
 enum ReportCategory {
@@ -50,8 +48,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
   ];
 
   void _showExportPreviewDialog(BuildContext context, String format) {
-    final erp = context.read<ErpProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
 
     showDialog(
       context: context,

@@ -131,6 +131,8 @@ class ErpProvider extends ChangeNotifier {
   }
 
   // Products & Inventory
+  void addProduct(ProductModel product) => saveProduct(product, isNew: true);
+
   void saveProduct(ProductModel product, {bool isNew = false}) {
     _db.saveProduct(product);
     _toast.success(
@@ -161,6 +163,8 @@ class ErpProvider extends ChangeNotifier {
   }
 
   // Customers
+  void addCustomer(CustomerModel customer) => saveCustomer(customer, isNew: true);
+
   void saveCustomer(CustomerModel customer, {bool isNew = false}) {
     _db.saveCustomer(customer);
     _toast.success(
@@ -169,6 +173,7 @@ class ErpProvider extends ChangeNotifier {
     );
     notifyListeners();
   }
+
 
   void deleteCustomer(String id) {
     final c = _db.getCustomerById(id);

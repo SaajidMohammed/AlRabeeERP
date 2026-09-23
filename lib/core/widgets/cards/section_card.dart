@@ -70,10 +70,11 @@ class SectionCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      if (trailing != null) trailing!,
+                      ?trailing,
                     ],
                   ),
                 ),
+
                 if (hasHeaderDivider)
                   Divider(
                     color: isDark ? AppColors.borderDark : AppColors.borderLight,

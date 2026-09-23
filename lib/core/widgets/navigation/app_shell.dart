@@ -59,18 +59,8 @@ class _AppShellState extends State<AppShell> {
             Scaffold(
               key: _scaffoldKey,
               backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-              drawer: !isDesktop
-                  ? Sidebar(
-                      isCollapsed: false,
-                      onToggleCollapse: () => Navigator.of(context).pop(),
-                    )
-                  : null,
               endDrawer: const NotificationDrawer(),
-              bottomNavigationBar: !isDesktop
-                  ? MobileBottomNav(
-                      onOpenMore: () => _scaffoldKey.currentState?.openDrawer(),
-                    )
-                  : null,
+              bottomNavigationBar: !isDesktop ? const MobileBottomNav() : null,
               body: Row(
                 children: [
                   // Desktop Sidebar

@@ -17,6 +17,10 @@ import '../../features/reports/reports_screen.dart';
 import '../../features/administration/administration_screen.dart';
 import '../../features/settings/settings_screen.dart';
 
+import '../../features/invoices/invoices_screen.dart';
+import '../../features/notifications/notifications_screen.dart';
+import '../../features/more/more_screen.dart';
+
 CustomTransitionPage<void> _buildCustomTransition(BuildContext context, GoRouterState state, Widget child) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
@@ -37,7 +41,43 @@ final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>()
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/dashboard',
+  errorBuilder: (context, state) => Scaffold(
+    body: Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.explore_off_rounded, size: 56, color: Color(0xFF6366F1)),
+          const SizedBox(height: 16),
+          const Text(
+            'Page Not Found',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            state.uri.toString(),
+            style: const TextStyle(fontSize: 13, color: Colors.grey),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () => context.go('/dashboard'),
+            icon: const Icon(Icons.home_rounded),
+            label: const Text('Back to Dashboard'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6366F1),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
   routes: [
+    GoRoute(
+      path: '/',
+      redirect: (context, state) => '/dashboard',
+    ),
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
@@ -54,6 +94,30 @@ final GoRouter appRouter = GoRouter(
             context,
             state,
             const DashboardScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/invoices',
+          pageBuilder: (context, state) => _buildCustomTransition(
+            context,
+            state,
+            const InvoicesScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/notifications',
+          pageBuilder: (context, state) => _buildCustomTransition(
+            context,
+            state,
+            const NotificationsScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/more',
+          pageBuilder: (context, state) => _buildCustomTransition(
+            context,
+            state,
+            const MoreScreen(),
           ),
         ),
         GoRoute(
@@ -164,3 +228,4 @@ final GoRouter appRouter = GoRouter(
     ),
   ],
 );
+

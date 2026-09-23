@@ -4,9 +4,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_tokens.dart';
 
 class MobileBottomNav extends StatelessWidget {
-  final VoidCallback onOpenMore;
-
-  const MobileBottomNav({super.key, required this.onOpenMore});
+  const MobileBottomNav({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,16 +13,18 @@ class MobileBottomNav extends StatelessWidget {
 
     int getSelectedIndex() {
       if (currentPath == '/dashboard') return 0;
-      if (currentPath.startsWith('/sales')) return 1;
-      if (currentPath.startsWith('/inventory') || currentPath.startsWith('/products')) return 2;
-      if (currentPath.startsWith('/crm') || currentPath.startsWith('/customers')) return 3;
-      return 4;
+      if (currentPath.startsWith('/inventory') || currentPath.startsWith('/products')) return 1;
+      if (currentPath.startsWith('/invoices') || currentPath.startsWith('/sales')) return 2;
+      if (currentPath.startsWith('/reports')) return 3;
+      if (currentPath == '/more') return 4;
+      return -1; // Subroutes
     }
 
     final selectedIndex = getSelectedIndex();
 
     return Container(
-      height: AppTokens.bottomNavHeight,
+      height: AppTokens.bottomNavHeight + MediaQuery.of(context).padding.bottom,
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : Colors.white,
         border: Border(
@@ -33,53 +33,66 @@ class MobileBottomNav extends StatelessWidget {
             width: 1,
           ),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
+            offset: const Offset(0, -2),
+            blurRadius: 10,
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildItem(
+          _buildNavItem(
             context,
-            icon: Icons.dashboard_rounded,
-            label: 'Dashboard',
+            icon: Icons.dashboard_outlined,
+            activeIcon: Icons.dashboard_rounded,
+            label: 'Home',
             isSelected: selectedIndex == 0,
             onTap: () => context.go('/dashboard'),
           ),
-          _buildItem(
+          _buildNavItem(
             context,
-            icon: Icons.receipt_long_rounded,
-            label: 'Sales',
-            isSelected: selectedIndex == 1,
-            onTap: () => context.go('/sales'),
-          ),
-          _buildItem(
-            context,
-            icon: Icons.inventory_2_rounded,
+            icon: Icons.inventory_2_outlined,
+            activeIcon: Icons.inventory_2_rounded,
             label: 'Inventory',
-            isSelected: selectedIndex == 2,
+            isSelected: selectedIndex == 1,
             onTap: () => context.go('/inventory'),
           ),
-          _buildItem(
+          _buildNavItem(
             context,
-            icon: Icons.view_kanban_rounded,
-            label: 'CRM',
-            isSelected: selectedIndex == 3,
-            onTap: () => context.go('/crm'),
+            icon: Icons.receipt_long_outlined,
+            activeIcon: Icons.receipt_long_rounded,
+            label: 'Invoices',
+            isSelected: selectedIndex == 2,
+            onTap: () => context.go('/invoices'),
           ),
-          _buildItem(
+          _buildNavItem(
             context,
-            icon: Icons.menu_rounded,
+            icon: Icons.analytics_outlined,
+            activeIcon: Icons.analytics_rounded,
+            label: 'Reports',
+            isSelected: selectedIndex == 3,
+            onTap: () => context.go('/reports'),
+          ),
+          _buildNavItem(
+            context,
+            icon: Icons.grid_view_outlined,
+            activeIcon: Icons.grid_view_rounded,
             label: 'More',
             isSelected: selectedIndex == 4,
-            onTap: onOpenMore,
+            onTap: () => context.go('/more'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildItem(
+  Widget _buildNavItem(
     BuildContext context, {
     required IconData icon,
+    required IconData activeIcon,
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
@@ -88,16 +101,26 @@ class MobileBottomNav extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDark ? AppColors.primaryDark.withValues(alpha: 0.25) : AppColors.primaryContainer)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              icon,
+              isSelected ? activeIcon : icon,
               size: 22,
               color: isSelected
-                  ? AppColors.primary
+                  ? (isDark ? AppColors.primaryLight : AppColors.primary)
                   : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight),
             ),
             const SizedBox(height: 3),
@@ -105,9 +128,9 @@ class MobileBottomNav extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected
-                    ? AppColors.primary
+                    ? (isDark ? AppColors.primaryLight : AppColors.primary)
                     : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight),
               ),
             ),

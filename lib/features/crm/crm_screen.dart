@@ -142,7 +142,7 @@ class _CrmScreenState extends State<CrmScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: source,
+                          initialValue: source,
                           decoration: const InputDecoration(labelText: 'Lead Source'),
                           items: const [
                             DropdownMenuItem(value: 'Corporate Inquiry', child: Text('Corporate Inquiry')),
@@ -160,7 +160,7 @@ class _CrmScreenState extends State<CrmScreen> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: category,
+                    initialValue: category,
                     decoration: const InputDecoration(labelText: 'Interested Category'),
                     items: const [
                       DropdownMenuItem(
@@ -183,7 +183,7 @@ class _CrmScreenState extends State<CrmScreen> {
                     children: [
                       Expanded(
                         child: DropdownButtonFormField<LeadStage>(
-                          value: stage,
+                          initialValue: stage,
                           decoration: const InputDecoration(labelText: 'Pipeline Stage'),
                           items: LeadStage.values.map((s) {
                             return DropdownMenuItem(
@@ -212,7 +212,7 @@ class _CrmScreenState extends State<CrmScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: DropdownButtonFormField<String>(
-                          value: assignedTo,
+                          initialValue: assignedTo,
                           decoration: const InputDecoration(labelText: 'Sales Executive'),
                           items: const [
                             DropdownMenuItem(value: 'Zaid Ansari', child: Text('Zaid Ansari')),
@@ -227,6 +227,7 @@ class _CrmScreenState extends State<CrmScreen> {
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 12),
                   TextField(
                     controller: notesCtrl,
